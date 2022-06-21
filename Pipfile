@@ -6,6 +6,10 @@ name = "pypi"
 [packages]
 requests = "*"
 beautifulsoup4 = "*"
+python-dotenv = "*"
+ipython = "*"
+selenium = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 

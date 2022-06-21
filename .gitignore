@@ -1,3 +1,6 @@
+### env - files
+.env 
+
 ### MonoDevelop template
 #User Specific
 *.userprefs
@@ -202,6 +205,7 @@ Backup of *.doc*
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
+.idea/
 .idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
@@ -1068,3 +1072,12 @@ abstract.record*
 secring.*
 
 
+!/.env
+!/.env
+/.env
+/app/json_test.py
+/app/test.json
+/app/url_pars.py
+/test.json
+/chromedriver
+/cookies.data
