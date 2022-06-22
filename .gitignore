@@ -1078,6 +1078,6 @@ secring.*
 /app/json_test.py
 /app/test.json
 /app/url_pars.py
-/test.json
+/app/test.json
 /chromedriver
 /cookies.data

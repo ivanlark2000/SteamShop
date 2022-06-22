@@ -1,43 +1,13 @@
 import json
-import os
-import pickle
 import time
+import pickle
 import requests
-from bs4 import BeautifulSoup as Bs
-from dotenv import load_dotenv
+from config import config
+from gmailcom import Gmail
 from selenium import webdriver
+from bs4 import BeautifulSoup as Bs
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-
-load_dotenv(override=True)
-LOGIN_STEAM = os.environ.get('login_steam')
-PASSWORD_STEAM = os.environ.get('password_steam')
-EMAIL = os.environ.get('email')
-PASSWORD_EMAIL = os.environ.get('password_email')
-USERAGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.115 Safari/537.36'
-
-
-
-
-def gettingSteamCode():
-    import email
-    # message_from_bytes Функция из модуля электронной почты. Это поможет нам прочитать электронные письма, которые приходят как байты и преобразуют их в текст.
-    from imaplib import IMAP4_SSL
-    GOOGLE_HOST = "imap.gmail.com"
-    PORT = 993
-    with IMAP4_SSL(host=GOOGLE_HOST, port=PORT) as connection:
-        connection.login(user=EMAIL, password=PASSWORD_EMAIL)
-        connection.list()
-        connection.select('inbox')  # Подключаемся к папке "входящие".
-        _, msgnums = connection.search(None, "(SUBJECT 'Steam')")
-        msgnum = msgnums[0].split()[-1]
-        _, data = connection.fetch(msgnum, "(RFC822)")
-        massage = email.message_from_bytes(data[0][1])
-        for part in massage.walk():
-            if part.get_content_type() == "text/plain":
-                msg = part.as_string()
-                code = msg[msg.find('Login Code') + 11:msg.find('Login Code') + 17]
-        return code
 
 
 def registration():
@@ -55,17 +25,18 @@ def registration():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.get(login_url)
     element_log = driver.find_element_by_name('username')
-    element_log.send_keys(LOGIN_STEAM)
+    element_log.send_keys(config.loginSteam)
     time.sleep(1)
     element_passw = driver.find_element_by_name('password')
-    element_passw.send_keys(PASSWORD_STEAM)
+    element_passw.send_keys(config.pwdSteam)
     time.sleep(2)
     element_submit = driver.find_element_by_id('login_btn_signin')
     element_submit.click()
     time.sleep(2)
     element_code = driver.find_element_by_id('authcode')
     time.sleep(5)
-    element_code.send_keys(gettingSteamCode())
+    gmail = Gmail()  # Создаем подключение к почте
+    element_code.send_keys(gmail.gettingSteamCode())  # Вводим полученный код в стим
     time.sleep(2)
     element_submit_end = driver.find_element_by_id('success_continue_btn')
     element_submit_end.click()
@@ -85,11 +56,9 @@ def getSession():
             session.cookies.set(cookie['name'], cookie['value'])
 
 
-def gettingList():
-    url = "https://steamcommunity.com/market/listings/570/Lineage%20The%20Ram%27s%20Head%20Armaments"
+def gettingList(html):
     """Функция получения списка истории продажи товара и цен"""
-    response = requests.get(url)
-    soup = Bs(response.text, 'html.parser')
+    soup = Bs(html, 'html.parser')
     rez = soup.find_all('script')[-1].contents[0]
     return eval(rez[rez.find('[['):rez.find(']]') + 2])
 
@@ -104,17 +73,48 @@ def gettingListofGood():
 
 def gettingJsonshop():
     response = session.get('https://steamcommunity.com/inventory/76561198173160771/570/2?l=russian&count=5000')
-    with open("test.json", 'w') as file:
-        json.dump(response.json(), file)
+    data = response.json()
+    descriptions = data['descriptions']
+    lstHashName = [key['market_hash_name'] for key in descriptions]
+    return lstHashName
 
 
-def gettingPriceAllGoods():
-    TEST_URL = "https://steamcommunity.com/market/priceoverview/?country=RU&currency=5&appid=753&market_hash_name=502940-Bust"
+def gettingPriceGoods(market_hash_name):
+    URL = "https://steamcommunity.com/market/priceoverview/"
+    params = {
+        'country': 'RU',
+        'currency': 5,
+        'appid': 570,
+        'market_hash_name': market_hash_name
+    }
+    response = session.get(URL, params=params)
+    data = response.json()
+    return data
+
+
+def gettindHtmlGood(market_hash_name):
+    """функция для получение страницы товара"""
+    url = 'https://steamcommunity.com/market/listings/570/' + market_hash_name.replace(' ', '%20')
+    response = session.get(url)
+    return response.text
+
+
+def getting():
+    """Функция получения цен всех активных товаров в магазине"""
+    lstHashName = gettingJsonshop()
+    for market_hash_name in lstHashName:
+        data = gettingPriceGoods(market_hash_name)
+        try:
+            print(f'Название товара: {market_hash_name}, Макс цена - {data["median_price"]}, Мин цена - '
+                  f'{data["lowest_price"]}, продано за 24 часа - {data["volume"]}')
+        except:
+            print(f'Название товара: {market_hash_name}, нельзя продать')
+        finally:
+            time.sleep(1)
 
 
 def main():
-    getSession()
-    gettingJsonshop()
+    registration()
 
 
 if __name__ == "__main__":
