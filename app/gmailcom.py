@@ -36,3 +36,6 @@ class Gmail:
             print(msg)
             self.connection.store(msg, "+FLAGS", "\\Deleted")  # устанавливаем метку удаленные
         self.connection.expunge()  # Навсегда удаляет помеченные письма
+
+
+gmail = Gmail()

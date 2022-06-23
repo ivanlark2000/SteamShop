@@ -1,9 +1,9 @@
 import json
 import time
-import pickle
 import requests
+from model import connM
 from config import config
-from gmailcom import Gmail
+from gmailcom import gmail
 from selenium import webdriver
 from bs4 import BeautifulSoup as Bs
 from selenium.webdriver.chrome.service import Service
@@ -42,8 +42,7 @@ def registration():
     element_submit_end.click()
     time.sleep(2)
     cookies = driver.get_cookies()
-    with open('cookies.data', 'wb') as cookefile:
-        pickle.dump(cookies, cookefile)
+    connM.savingCookies(cookies)
 
 
 def getSession():
@@ -114,7 +113,7 @@ def getting():
 
 
 def main():
-    registration()
+    print(config.session)
 
 
 if __name__ == "__main__":

@@ -1080,4 +1080,4 @@ secring.*
 /app/url_pars.py
 /app/test.json
 /chromedriver
-/cookies.data
+/app/cookies.data

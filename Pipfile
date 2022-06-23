@@ -10,6 +10,8 @@ python-dotenv = "*"
 ipython = "*"
 selenium = "*"
 webdriver-manager = "*"
+pymongo = "*"
+datetime = "*"
 
 [dev-packages]
 

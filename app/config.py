@@ -1,6 +1,6 @@
 import os
-import pickle
 import requests
+from model import connM
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -15,8 +15,9 @@ class Config:
         self.pwdSteam = os.environ.get('password_steam')
         self.email = os.environ.get('email')
         self.pwdMail = os.environ.get('password_email')
-        with open('cookies.data', 'rb') as cookefile:
-            self.cookies = pickle.load(cookefile)
+        self.pwdbd = os.environ.get('password_db')
+        self.loginDb = os.environ.get('login_db')
+        self.cookies = connM.loadCookies()
         with requests.session() as self.session:
             for cookie in self.cookies:
                 self.session.cookies.set(cookie['name'], cookie['value'])
