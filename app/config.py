@@ -18,9 +18,9 @@ class Config:
         self.pwdbd = os.environ.get('password_db')
         self.loginDb = os.environ.get('login_db')
         self.cookies = connM.loadCookies()
-        with requests.session() as self.session:
-            for cookie in self.cookies:
-                self.session.cookies.set(cookie['name'], cookie['value'])
+        self.session = requests.session()
+        for cookie in self.cookies:
+            self.session.cookies.set(cookie['name'], cookie['value'])
 
 
 config = Config()
