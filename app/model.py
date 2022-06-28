@@ -46,6 +46,7 @@ class connDbMongo:
         return collection.find_one({"_id": 22222})['invent']
 
     def loadMyItem(self, market_hash_name, currentSailStatus):
+        """"""
         collection = self.db['item']
         load = {
             "market_hash_name": market_hash_name,
@@ -54,7 +55,12 @@ class connDbMongo:
         }
         return collection.insert_one(load).acknowledged
 
-    def saveShopItem(self, lst):
+    def loadShopItem(self, hash_name):
+        """Для загрузки объекта итема (все записи в бд об итеме) из бд"""
+        collection = self.db['shopItem']
+        return collection.find({"market_name": hash_name})
+
+    def saveShopItem(self, lst, count=None):
         """Метод для сохранения предмета который продается в стиме"""
         collection = self.db['shopItem']
         for item in lst:
@@ -65,9 +71,12 @@ class connDbMongo:
                     "date&time": datetime.datetime.utcnow(),
                     }
                 collection.insert_one(load)
-                print(f'Item - {item["market_item_name"]} успешно добавлен')
+                print(f'Item №{count} - {item["market_item_name"]} успешно добавлен')
             except Exception as e:
-                print(f'Не удалось добавить в базу {item["market_item_name"]} ошибка - {e}')
+                print(f'Не удалось добавить в базу Item №{count} {item["market_item_name"]} ошибка - {e}')
+            finally:
+                count += 1
+        return count
 
     def saveUnicShoplist(self, lst):
         """Метод для записи уникальных предметов в базу"""

@@ -2,47 +2,12 @@ import json
 import time
 import random
 import requests
+from objectItem import myshop
 from model import connM
 from config import config
-from gmailcom import gmail
-from selenium import webdriver
+from datetime import datetime
+from objectItem import ItemSteamShop
 from bs4 import BeautifulSoup as Bs
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-
-
-def registration():
-    """Функция для регистрации в стиме"""
-    login_url = "https://store.steampowered.com/login"
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-gpu")
-    # options.add_argument("--headless")
-    options.add_argument("--disable-blink-features")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("start-maximized")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver.get(login_url)
-    element_log = driver.find_element_by_name('username')
-    element_log.send_keys(config.loginSteam)
-    time.sleep(1)
-    element_passw = driver.find_element_by_name('password')
-    element_passw.send_keys(config.pwdSteam)
-    time.sleep(2)
-    element_submit = driver.find_element_by_id('login_btn_signin')
-    element_submit.click()
-    time.sleep(2)
-    element_code = driver.find_element_by_id('authcode')
-    time.sleep(5)
-    element_code.send_keys(gmail.gettingSteamCode())  # Вводим полученный код в стим
-    time.sleep(2)
-    element_submit_end = driver.find_element_by_id('success_continue_btn')
-    element_submit_end.click()
-    time.sleep(2)
-    cookies = driver.get_cookies()
-    connM.savingCookies(cookies)
 
 
 def gettingList(html):
@@ -143,26 +108,32 @@ def gettingJson(page=1):
 
 def gettingListonPage(page=1):
     """Функция парсинга Json итемов страницы"""
-    data = gettingJson(page)
-    soup = Bs(data['results_html'], 'html.parser')
-    itms = soup.select(".market_listing_item_name")
-    qtys = soup.select(".market_listing_num_listings_qty")
-    normal_prices = soup.select(".normal_price")
-    normal_price_list = [int(normal_price.get('data-price'))/100 for normal_price in normal_prices if normal_price.get('data-price')]
-    sale_prices = soup.select('.sale_price')
-    sale_price_list = [float(sale_price.text[:-5].replace(',', '.')) for sale_price in sale_prices]
-    market_item_name_list = [item.text for item in itms]
-    qty_list = [int(qty['data-qty']) for qty in qtys]
-    itms_list = []
-    for i in range(10):
-        itmsPars = {
-            'market_item_name': market_item_name_list[i],
-            'qty': qty_list[i],
-            'normal_price': normal_price_list[i],
-            'sale_prices': sale_price_list[i],
-        }
-        itms_list.append(itmsPars)
-    return itms_list, market_item_name_list
+    while True:
+        try:
+            data = gettingJson(page)
+            soup = Bs(data['results_html'], 'html.parser')
+            itms = soup.select(".market_listing_item_name")
+            qtys = soup.select(".market_listing_num_listings_qty")
+            normal_prices = soup.select(".normal_price")
+            normal_price_list = [int(normal_price.get('data-price'))/100 for normal_price in normal_prices if normal_price.get('data-price')]
+            sale_prices = soup.select('.sale_price')
+            sale_price_list = [float(sale_price.text[:-5].replace(',', '.')) for sale_price in sale_prices]
+            market_item_name_list = [item.text for item in itms]
+            qty_list = [int(qty['data-qty']) for qty in qtys]
+            itms_list = []
+            for i in range(10):
+                itmsPars = {
+                    'market_item_name': market_item_name_list[i],
+                    'qty': qty_list[i],
+                    'normal_price': normal_price_list[i],
+                    'sale_prices': sale_price_list[i],
+                }
+                itms_list.append(itmsPars)
+            return itms_list, market_item_name_list
+        except:
+            print(f"Происходит обновление куков")
+            config.updateCookies()
+            time.sleep(20)
 
 
 def creatingUnicShopList(lst):
@@ -172,20 +143,43 @@ def creatingUnicShopList(lst):
 
 def parsingAllShopItem():
     """Функция, которая запускает парсинг магазина"""
+    count = 0
+    time_start = datetime.now()
     totalPage = int(gettingJson()['total_count']) / 10
     pause = (12 * 60 * 60) / totalPage
-    lst = list(range(1, (int(totalPage) + 1)))
-    while lst is not None:
+    lst = list(range(1, int(totalPage) + 1))
+    while len(lst) != 0:
         page = random.choice(lst)
         lst.remove(page)
         itms_list, market_item_name_list = gettingListonPage(page)
-        connM.loadShopItem(itms_list)
+        count = connM.saveShopItem(lst=itms_list, count=count)
         creatingUnicShopList(market_item_name_list)
         time.sleep(pause)
+    print(f'Цикл сканирование предметов по Доте 2 закончен.'
+          f'\n{count} - предметов в данный момент в магазине.'
+          f'\n{time_start} - начало цикла парсинга предметов в магазине Стим Дота 2.'
+          f'\n{datetime.now()} - время окончания цикла парсинга предметов в магазине Стим Дота 2.'
+          f'\n{datetime.now() - time_start} - время затрачено.')
+
+
+def gettingDifference():
+    """Функция, которая выдает предметы которые вырасти в цене на 10 руб"""
+    for item in connM.loadTUnicShopList():
+        try:
+            itemShop = ItemSteamShop(item)
+            if itemShop.difference > 10:
+                print(f'{item} вырос на {itemShop.difference} руб - стоимость сейчас {itemShop.normal_price}')
+        except:
+            continue
 
 
 def main():
+    # registration()
     parsingAllShopItem()
+    # gmail.cleaningAllemail()
+    # gettingDifference()
+    # myshop.showCurrentPrice()
+    # myshop.count_curent_inventory()
 
 
 if __name__ == "__main__":
