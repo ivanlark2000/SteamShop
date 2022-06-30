@@ -31,38 +31,45 @@ class Config:
 
     def updateCookies(self):
         """Метод, который создает или обновляет куки в базе данных"""
-        login_url = "https://store.steampowered.com/login"
-        options = webdriver.ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--headless")
-        options.add_argument("--disable-blink-features")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument("start-maximized")
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-        driver.get(login_url)
-        element_log = driver.find_element_by_name('username')
-        element_log.send_keys(config.loginSteam)
-        time.sleep(1)
-        element_passw = driver.find_element_by_name('password')
-        element_passw.send_keys(config.pwdSteam)
-        time.sleep(2)
-        element_submit = driver.find_element_by_id('login_btn_signin')
-        element_submit.click()
-        time.sleep(2)
-        element_code = driver.find_element_by_id('authcode')
-        time.sleep(5)
-        from gmailcom import gmail
-        element_code.send_keys(gmail.gettingSteamCode())  # Вводим полученный код в стим
-        time.sleep(2)
-        element_submit_end = driver.find_element_by_id('success_continue_btn')
-        element_submit_end.click()
-        time.sleep(2)
-        cookies = driver.get_cookies()
-        connM.savingCookies(cookies)
-        self.loadCookies()
+        try:
+            login_url = "https://store.steampowered.com/login"
+            options = webdriver.ChromeOptions()
+            options.add_argument("--disable-extensions")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--headless")
+            options.add_argument("--disable-blink-features")
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument("start-maximized")
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            driver.get(login_url)
+            element_log = driver.find_element_by_name('username')
+            element_log.send_keys(config.loginSteam)
+            time.sleep(1)
+            element_passw = driver.find_element_by_name('password')
+            element_passw.send_keys(config.pwdSteam)
+            time.sleep(2)
+            element_submit = driver.find_element_by_id('login_btn_signin')
+            element_submit.click()
+            time.sleep(2)
+            element_code = driver.find_element_by_id('authcode')
+            time.sleep(5)
+            from gmailcom import gmail
+            element_code.send_keys(gmail.gettingSteamCode())  # Вводим полученный код в стим
+            time.sleep(2)
+            element_submit_end = driver.find_element_by_id('success_continue_btn')
+            element_submit_end.click()
+            time.sleep(2)
+            cookies = driver.get_cookies()
+            connM.savingCookies(cookies)
+            self.loadCookies()
+            print('Куки успешно обновлены')
+            return True
+        except Exception as er:
+            print(f'Не удалось обновить куки, ошибка - {er}')
+            time.sleep(120)
+            return False
 
 
 config = Config()

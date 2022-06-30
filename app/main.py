@@ -2,10 +2,12 @@ import json
 import time
 import random
 import requests
-from objectItem import myshop
+import argparse
 from model import connM
 from config import config
+from gmailcom import gmail
 from datetime import datetime
+from objectItem import myshop
 from objectItem import ItemSteamShop
 from bs4 import BeautifulSoup as Bs
 
@@ -130,10 +132,11 @@ def gettingListonPage(page=1):
                 }
                 itms_list.append(itmsPars)
             return itms_list, market_item_name_list
-        except:
-            print(f"Происходит обновление куков")
-            config.updateCookies()
-            time.sleep(20)
+        except Exception as er:
+            print(f"Происходит обновление куков, произошла ошибка {er}")
+            if config.updateCookies():
+                continue
+            time.sleep(120)
 
 
 def creatingUnicShopList(lst):
@@ -148,7 +151,7 @@ def parsingAllShopItem():
     totalPage = int(gettingJson()['total_count']) / 10
     pause = (12 * 60 * 60) / totalPage
     lst = list(range(1, int(totalPage) + 1))
-    while len(lst) != 0:
+    while lst:
         page = random.choice(lst)
         lst.remove(page)
         itms_list, market_item_name_list = gettingListonPage(page)
@@ -173,13 +176,26 @@ def gettingDifference():
             continue
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', '--scan', action="store_true", help="Запускает парсинг магазина стим по доте2")
+parser.add_argument('-t', '--total', action="store_true", help="Узнать общую стоимость всех вещей в инвентаре")
+parser.add_argument('-a', '--all', action="store_true", help="Узнать стоимость каждого предмета в инвентаре")
+parser.add_argument('-v', '--version', action="store_true", help="Узнать версию продукта")
+args = parser.parse_args()
+
+
 def main():
-    # registration()
-    parsingAllShopItem()
+    if args.scan:
+        parsingAllShopItem()
+    elif args.total:
+        print(f'{myshop.count_current_inventory():0.2f} руб.')
+    elif args.all:
+        myshop.showCurrentPrice()
+    elif args.version:
+        print("steamShopScript ver. 1.0")
     # gmail.cleaningAllemail()
     # gettingDifference()
-    # myshop.showCurrentPrice()
-    # myshop.count_curent_inventory()
+    print(config.updateCookies())
 
 
 if __name__ == "__main__":
