@@ -29,14 +29,16 @@ class MySteamShop:
     def count_current_inventory(self):
         """Метод, который подсчитывает текущую сумму всех предметов в инвентаре"""
         count = 0
+        summa = 0
         for item in self.total_list:
             rez = ItemSteamShop(item)
-            count = count + rez.normal_price
-        return count
+            summa = summa + rez.normal_price
+            count += 1
+        return count, summa
 
     def showCurrentPrice(self):
         """Метод, который выводит в печать текущую цену всех предметов в аккаунте"""
-        for item in myshop.total_list:
+        for item in self.total_list:
             rez = ItemSteamShop(item)
             if rez.normal_price != 0:
                 print(f'{rez.hash_name} стоит {rez.normal_price:0.2f} руб')

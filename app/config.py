@@ -57,7 +57,7 @@ class Config:
             time.sleep(5)
             from gmailcom import gmail
             element_code.send_keys(gmail.gettingSteamCode())  # Вводим полученный код в стим
-            time.sleep(2)
+            driver.implicitly_wait(5)
             element_submit_end = driver.find_element_by_id('success_continue_btn')
             element_submit_end.click()
             time.sleep(2)
@@ -69,7 +69,6 @@ class Config:
         except Exception as er:
             print(f'Не удалось обновить куки, ошибка - {er}')
             time.sleep(120)
-            return False
 
 
 config = Config()

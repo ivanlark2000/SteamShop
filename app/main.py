@@ -134,8 +134,7 @@ def gettingListonPage(page=1):
             return itms_list, market_item_name_list
         except Exception as er:
             print(f"Происходит обновление куков, произошла ошибка {er}")
-            if config.updateCookies():
-                continue
+            config.updateCookies()
             time.sleep(120)
 
 
@@ -188,14 +187,15 @@ def main():
     if args.scan:
         parsingAllShopItem()
     elif args.total:
-        print(f'{myshop.count_current_inventory():0.2f} руб.')
+        count, summa = myshop.count_current_inventory()
+        print(f'Всего предметов в инвентаре - {count} шт.'
+              f'\nТекущая стоимость всех предметов {summa:0.2f} руб.')
     elif args.all:
         myshop.showCurrentPrice()
     elif args.version:
         print("steamShopScript ver. 1.0")
     # gmail.cleaningAllemail()
     # gettingDifference()
-    print(config.updateCookies())
 
 
 if __name__ == "__main__":
