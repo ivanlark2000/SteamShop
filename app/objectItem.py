@@ -1,4 +1,5 @@
 from model import connM
+from config import config
 
 
 class ItemSteamShop:
@@ -21,7 +22,10 @@ class ItemSteamShop:
 
 
 class MySteamShop:
-    """Клас инвентаря в магазине"""
+    """Клас инвентаря в магазине
+        param:
+            self.total_list - общий список предметов
+            self.total_count - общая стоимость переметов в инвентаре"""
     def __init__(self):
         self.total_list = [descriptions['market_hash_name'] for descriptions in connM.loadMyInventory()['descriptions']]
         self.total_count = connM.loadMyInventory()['total_inventory_count']
@@ -42,6 +46,58 @@ class MySteamShop:
             rez = ItemSteamShop(item)
             if rez.normal_price != 0:
                 print(f'{rez.hash_name} стоит {rez.normal_price:0.2f} руб')
+
+
+class ItemInMyAccount:
+    """Клас который создает обьект предмета в моей коллекции
+        arg:
+            # price - цена указывается в сотых без запятой
+            # sessionid - id сессии
+            # assetid - id предмета"""
+    def __init__(self, hash_name):
+        self.hash_name = hash_name
+        self.cod_hash_name = self.hash_name.replace(" ", "%20")
+        json = connM.loadMyInventory()
+        for num in json['descriptions']:
+            if num['market_hash_name'] == hash_name:
+                self.classid = num['classid']
+                self.instanceid = num['instanceid']
+                break
+        else:
+            self.classid = None
+            self.instanceid = None
+        for num in json['assets']:
+            if num['classid'] == self.classid and num['instanceid'] == self.instanceid:
+                self.assetid = num['assetid']
+                self.amount = num['amount']
+                break
+        else:
+            self.assetid = None
+            self.amount = None
+        if None in (self.amount, self.assetid, self.instanceid, self.classid):
+            self.rez = False
+        else:
+            self.rez = True
+
+    def sellItem(self, price, amount=1):
+        """Функция по продаже предмета"""
+        url = "https://steamcommunity.com/market/sellitem/"
+        payload = {
+            "sessionid": config.sessionid,
+            "appid": 570,
+            "contextid": 2,
+            "assetid": self.assetid,
+            "amount": amount,
+            "price": price,
+            }
+        response = config.session.post(url, data=payload, headers=config.headers)
+        return response.json()["success"]
+
+    def pricehistory(self):
+        """Функция для вывода истории цен"""
+        url = f"https://steamcommunity.com/market/pricehistory/?appid=570&market_hash_name={self.cod_hash_name}"
+        response = config.session.get(url, headers=config.headers)
+        return response.json()
 
 
 myshop = MySteamShop()

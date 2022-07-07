@@ -8,7 +8,7 @@ from config import config
 from gmailcom import gmail
 from datetime import datetime
 from objectItem import myshop
-from objectItem import ItemSteamShop
+from objectItem import ItemSteamShop, ItemInMyAccount
 from bs4 import BeautifulSoup as Bs
 
 
@@ -17,15 +17,6 @@ def gettingList(html):
     soup = Bs(html, 'html.parser')
     rez = soup.find_all('script')[-1].contents[0]
     return eval(rez[rez.find('[['):rez.find(']]') + 2])
-
-
-def gettingJsonofGood():
-    """Получаем список товаров в аккаунте"""
-    url = "https://steamcommunity.com/profiles/76561198173160771/inventory/"
-    url_json = "https://steamcommunity.com/inventory/76561198173160771/570/2?l=russian&count=5000"
-    config.session.get(url, headers={'User-Agent': config.useragent})
-    response = config.session.get(url_json)
-    connM.saveMyInventory(response.json())
 
 
 def gettingLstshop():
@@ -38,7 +29,7 @@ def gettingLstshop():
 
 
 def gettingPriceGoods(market_hash_name):
-    """Функция для вывода текушей цены предмета"""
+    """Функция для вывода текущей цены предмета"""
     URL = "https://steamcommunity.com/market/priceoverview/"
     params = {
         'country': 'RU',
@@ -175,6 +166,17 @@ def gettingDifference():
             continue
 
 
+def getSessionId():
+    url = "https://store.steampowered.com/?l=russian"
+    headers = {
+        "User-Agent": config.useragent
+    }
+    response = requests.post(url, headers=headers, cookies=config.session.cookies)
+    print(response.cookies)
+    print(connM.loadCookies())
+
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--scan', action="store_true", help="Запускает парсинг магазина стим по доте2")
 parser.add_argument('-t', '--total', action="store_true", help="Узнать общую стоимость всех вещей в инвентаре")
@@ -194,8 +196,8 @@ def main():
         myshop.showCurrentPrice()
     elif args.version:
         print("steamShopScript ver. 1.0")
-    # gmail.cleaningAllemail()
-    # gettingDifference()
+    #getSessionId()
+    gettingLstshop()
 
 
 if __name__ == "__main__":
