@@ -19,34 +19,8 @@ def gettingList(html):
     return eval(rez[rez.find('[['):rez.find(']]') + 2])
 
 
-def gettingLstshop():
-    """Функция, которая выводит список товаров в личном кабинете"""
-    response = config.session.get('https://steamcommunity.com/inventory/76561198173160771/570/2?l=russian&count=5000')
-    data = response.json()
-    descriptions = data['descriptions']
-    lstHashName = [key['market_hash_name'] for key in descriptions]
-    return lstHashName
-
-
-def gettingPriceGoods(market_hash_name):
-    """Функция для вывода текущей цены предмета"""
-    URL = "https://steamcommunity.com/market/priceoverview/"
-    params = {
-        'country': 'RU',
-        'currency': 5,
-        'appid': 570,
-        'market_hash_name': market_hash_name
-    }
-    try:
-        response = config.session.get(URL, params=params)
-        data = response.json()
-        return data
-    except Exception as e:
-        print(f'Произошла ошибка при получении информации и цене о предмете. Ошибка - {e}')
-
-
 def gettindHtmlGood(market_hash_name):
-    """функция для получение страницы товара"""
+    """Функция, для получения страницы товара"""
     url = 'https://steamcommunity.com/market/listings/570/' + market_hash_name.replace(' ', '%20')
     response = config.session.get(url)
     return response.text
@@ -54,8 +28,7 @@ def gettindHtmlGood(market_hash_name):
 
 def getting():
     """Функция получения цен всех активных товаров в магазине"""
-    lstHashName = gettingJsonshop()
-    for market_hash_name in lstHashName:
+    for market_hash_name in myshop.total_list:
         data = gettingPriceGoods(market_hash_name)
         try:
             print(f'Название товара: {market_hash_name}, Макс цена - {data["median_price"]}, Мин цена - '
@@ -166,17 +139,6 @@ def gettingDifference():
             continue
 
 
-def getSessionId():
-    url = "https://store.steampowered.com/?l=russian"
-    headers = {
-        "User-Agent": config.useragent
-    }
-    response = requests.post(url, headers=headers, cookies=config.session.cookies)
-    print(response.cookies)
-    print(connM.loadCookies())
-
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--scan', action="store_true", help="Запускает парсинг магазина стим по доте2")
 parser.add_argument('-t', '--total', action="store_true", help="Узнать общую стоимость всех вещей в инвентаре")
@@ -196,8 +158,8 @@ def main():
         myshop.showCurrentPrice()
     elif args.version:
         print("steamShopScript ver. 1.0")
-    #getSessionId()
-    gettingLstshop()
+    myshop.saleALLitems()
+    # myshop.showCurrentPrice()
 
 
 if __name__ == "__main__":
