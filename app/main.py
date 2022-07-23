@@ -139,6 +139,20 @@ def gettingDifference():
             continue
 
 
+def parsItemInSteam():
+    count = 1
+    for item in connM.loadTUnicShopList():
+        pr = ItemSteamShop(item)
+        data = pr.getSellInfo()
+        print(f'Scan item №{count} - {item}')
+        if data:
+            print('айди продавца', data[0])
+            print(f'цена предмета {item} - {data[1]}')
+            print(f'разница {data[2]}')
+        time.sleep(5)
+        count += 1
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--scan', action="store_true", help="Запускает парсинг магазина стим по доте2")
 parser.add_argument('-t', '--total', action="store_true", help="Узнать общую стоимость всех вещей в инвентаре")
@@ -158,8 +172,9 @@ def main():
         myshop.showCurrentPrice()
     elif args.version:
         print("steamShopScript ver. 1.0")
-    myshop.saleALLitems()
+    # myshop.saleALLitems()
     # myshop.showCurrentPrice()
+    parsItemInSteam()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import math
 import time
-
+import copy
 from model import connM
 from config import config
 from bs4 import BeautifulSoup as Bs
@@ -27,7 +27,9 @@ class ItemSteamShop:
             self.difference = 0
 
     def getSellInfo(self, page=0):
-        """Метод, который выводит информацию о продуваемых предметах
+        """Метод, который выводит:
+                        - id продавца,
+                        - и цену предмета
         param
             page - страница продаваемых предметов"""
         url = f"https://steamcommunity.com/market/listings/570/{self.code_hash_name}/render"
@@ -39,34 +41,42 @@ class ItemSteamShop:
                 'language': 'russian',
                 'currency': 5,
         }
-        response = config.session.get(url, params=paydata, headers=config.headers)
-        html = response.json()['results_html']
-        soup = Bs(html, 'html.parser')
-        rez = soup.find_all("span", class_="market_listing_price market_listing_price_with_fee")
-        list_price_with_fee = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
-        rez = soup.find_all("span", class_="market_listing_price market_listing_price_with_publisher_fee_only")
-        list_publisher_fee_only = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
-        rez = soup.find_all("span", class_="market_listing_price market_listing_price_without_fee")
-        list_price_without_fee = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
-        rez = soup.select('span', clas_="market_listing_item_name")
-        list_id_salesman = []
-        for i in rez:
-            try:
-                list_id_salesman.append(int(i['id'][8:-5]))
-            except:
-                continue
-        print(mean(list_price_without_fee[4:]) - list_price_without_fee[1])
-        print(list_id_salesman)
-        print(list_price_with_fee)
-        print(list_publisher_fee_only)
-        print(list_price_without_fee)
+        try:
+            response = config.session.get(url, params=paydata, headers=config.headers)
+            html = response.json()['results_html']
+            soup = Bs(html, 'html.parser')
+            rez = soup.find_all("span", class_="market_listing_price market_listing_price_with_fee")
+            list_price_with_fee = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
+            rez = soup.find_all("span", class_="market_listing_price market_listing_price_with_publisher_fee_only")
+            list_publisher_fee_only = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
+            rez = soup.find_all("span", class_="market_listing_price market_listing_price_without_fee")
+            list_price_without_fee = [float(i.text.strip()[:-5].replace(",", '.')) for i in rez]
+            rez = soup.select('span', clas_="market_listing_item_name")
+            list_id_salesman = []
+            for i in rez:
+                try:
+                    list_id_salesman.append(int(i['id'][8:-5]))
+                except:
+                    continue
+            lst = copy.deepcopy(list_price_with_fee)
+            lst.remove(min(list_price_with_fee))
+            difference = mean(lst) - min(list_price_with_fee) - min(list_price_with_fee) - min(list_price_without_fee)
+            if len(list_publisher_fee_only) == 10 and difference >= 1:
+                return list_id_salesman[list_price_with_fee.index(min(list_price_with_fee))], min(list_price_with_fee), difference
+            else:
+                return False
+        except:
+            return False
 
     def bayitem(self, id_salesman, price, qty=1):
-        """Метод, для покупки самого дешевого предмета
+        """Метод, для покупки предмета
         param
             id_salesman - ай ди продавца
+            price - цена
+            qty - количество
+
             """
-        url = f"https://steamcommunity.com/market/buylisting/{id_saleaman}"
+        url = f"https://steamcommunity.com/market/buylisting/{id_salesman}"
         fee = math.floor(price * 0.1) + math.floor(price * 0.05)
         payload = {
                 'sessionid': config.sessionid,
@@ -79,7 +89,7 @@ class ItemSteamShop:
                 'save_my_address': 0,
         }
         response = config.session.post(url, data=payload, headers=config.headers)
-        data = response.json()
+        return response.json()
 
 
 class MySteamShop:

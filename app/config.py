@@ -11,7 +11,7 @@ load_dotenv(override=True)
 
 
 class Config:
-    """Класс с настройками и данными об окаунтах"""
+    """Класс с настройками и данными об аккаунтах"""
     useragent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.115 Safari/537.36'
 
     def __init__(self):
